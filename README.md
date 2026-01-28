@@ -29,9 +29,11 @@ Above service could be invoked from curl client.
 
 Sample request:
 
-> $ curl -s http://localhost:8000/chat \
+```
+$ curl -s http://localhost:8000/chat \
   -H 'content-type: application/json' \
   -d '{"session_id":"demo1","message":"Set up a 30 minute meeting with Alex Chen about Q1 planning 01/27/2026 6 pm"}' 
+```
 
 
 Note: Use a new session_id every time as the requests are stored in a map in code. It is needed for multi-turn example (shown in the section below).
@@ -39,7 +41,9 @@ Note: Use a new session_id every time as the requests are stored in a map in cod
 
 Sample response:
 
-> {"session_id":"demo1","reply":"Booked: Q1 planning with Alex Chen at 2026-01-27T18:00:00-08:00 for 30 minutes.","state":{"last_user_message":"Set up a 30 minute meeting with Alex Chen about Q1 planning 01/27/2026 6 pm","last_agent_message":"Booked: Q1 planning with Alex Chen at 2026-01-27T18:00:00-08:00 for 30 minutes.","draft":{"attendee_full_name":"Alex Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30,"timezone":"America/Los_Angeles"},"status":"booked","suggestions":[],"booked_event":{"id":"1","attendee_full_name":"Alex Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30},"override":false}}
+```
+{"session_id":"demo1","reply":"Booked: Q1 planning with Alex Chen at 2026-01-27T18:00:00-08:00 for 30 minutes.","state":{"last_user_message":"Set up a 30 minute meeting with Alex Chen about Q1 planning 01/27/2026 6 pm","last_agent_message":"Booked: Q1 planning with Alex Chen at 2026-01-27T18:00:00-08:00 for 30 minutes.","draft":{"attendee_full_name":"Alex Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30,"timezone":"America/Los_Angeles"},"status":"booked","suggestions":[],"booked_event":{"id":"1","attendee_full_name":"Alex Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30},"override":false}}
+```
 
 
 ### With calendar slot busy, a two-turn example
