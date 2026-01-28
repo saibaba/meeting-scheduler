@@ -75,7 +75,7 @@ Response:
 
 ## Langchain workflow
 
-![alt text](/Users/saibabat/agentic/meeting-scheduler/workflow_graph.png "Workflow")
+![alt text](workflow_graph.png "Workflow")
 
 
 ## Building
