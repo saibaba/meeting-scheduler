@@ -2,6 +2,13 @@
 
 Purpose is just to show basic example of langgraph, nothing fancy, no proper memory management or anything.
 
+This is a meeting scheduler by looking up calendar for available slots. This does not connect to any real calendar, but uses a mock for testing.
+
+It has just 2 use-cases:
+1. You can request to book time for an attendee and it will be immediately honored as long as the attendee name does not contain jeff or mike.
+2. You can request to book time for any attendee whose name contains jeff or mike and you get a response saying that the seleted date/time not available (no matter what the values are) with 3 suggested time slots. You reply with picking one of them and meeting will be booked.
+
+
 ## Setup
 
 Modify .venv and add your OPENAI_API_KEY.
