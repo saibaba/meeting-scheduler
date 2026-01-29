@@ -19,7 +19,7 @@ from .llm import invoke_llm
 json_parser = JsonOutputParser(pydantic_object=MeetingDraft)
 
 
-def build_agent(calendar: MockCalendar):
+def build_agent(calendar: MockCalendar, memory: MemorySaver = None, config: dict = {}):
     llm = ChatOpenAI(
         model=os.getenv("OPENAI_MODEL", "gpt-4o"),
         temperature=0.2,
@@ -163,9 +163,8 @@ def build_agent(calendar: MockCalendar):
         new_messages.append(state.messages[-1])
     
         return {"messages": new_messages}
-        
-    
-    
+
+
     async def ask_alternative_node(state: AgentState) -> dict:
     
         """
@@ -211,34 +210,73 @@ def build_agent(calendar: MockCalendar):
         #return {"messages": [HumanMessage(content=f"draft: {m}"), res]}
         return {"messages": [res.content]}
     
-   
-    g = StateGraph(AgentState)
-    g.add_node("extract", extract_node)
-    g.add_node("ask_missing", ask_missing_node)
-    g.add_node("check_availability", check_availability_node)
-    g.add_node("ask_alternative", ask_alternative_node)
-    
-    g.add_node("summarize", summarize_node)
-    
-    g.set_entry_point("extract")
-    
-    
-    g.add_conditional_edges("extract", extract_decide_next_node, {
-        "ask_missing": "ask_missing",
-        "check_availability": "check_availability",
-    })
-    
-    g.add_edge("ask_missing", END)
-    
-    g.add_conditional_edges("check_availability", availability_decide_next_node, {
-        "summarize": "summarize",
-        "ask_alternative" : "ask_alternative"});
-    
-    g.add_edge("ask_alternative", END)
-    
-    g.add_edge("summarize", END)
-    
-    workflow = g.compile()
 
-    return workflow
+    def create_revivable_graph():   
+        g = StateGraph(AgentState)
+        g.add_node("extract", extract_node)
+        g.add_node("ask_missing", ask_missing_node)
+        g.add_node("check_availability", check_availability_node)
+        g.add_node("ask_alternative", ask_alternative_node)
+    
+        g.add_node("summarize", summarize_node)
+    
+        g.set_entry_point("extract")
+    
+    
+        g.add_conditional_edges("extract", extract_decide_next_node, {
+            "ask_missing": "ask_missing",
+            "check_availability": "check_availability",
+        })
+    
+        g.add_edge("ask_missing", END)
+    
+        g.add_conditional_edges("check_availability", availability_decide_next_node, {
+            "summarize": "summarize",
+            "ask_alternative" : "ask_alternative"});
+    
+        g.add_edge("ask_alternative", END)
+    
+        g.add_edge("summarize", END)
+    
+        workflow = g.compile()
+
+        return workflow
+
+    def create_human_in_loop_graph():
+
+        g = StateGraph(AgentState)
+        g.add_node("extract", extract_node)
+        g.add_node("ask_missing", ask_missing_node)
+        g.add_node("check_availability", check_availability_node)
+        g.add_node("ask_alternative", ask_alternative_node)
+        g.add_node("human", human_node)
+        g.add_node("summarize", summarize_node)
+      
+        g.set_entry_point("extract")
+    
+        g.add_conditional_edges("extract", extract_decide_next_node, {
+            "ask_missing": "ask_missing",
+            "check_availability": "check_availability",
+        })
+    
+        g.add_edge("ask_missing", "human")
+        g.add_edge("human", "extract")
+ 
+        g.add_conditional_edges("check_availability", availability_decide_next_node, {
+            "summarize": "summarize",
+            "ask_alternative" : "ask_alternative"});
+    
+        g.add_edge("ask_alternative", "human")
+    
+        g.add_edge("summarize", END)
+    
+        workflow = g.compile(checkpointer=memory, interrupt_before=["human"])
+
+        return workflow
+
+    if memory is not None and 'configurable' in config and 'thread_id' in config['configurable']:
+        return create_human_in_loop_graph()
+    else:
+        return create_revivable_graph()
+
  

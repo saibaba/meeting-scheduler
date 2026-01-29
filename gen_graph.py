@@ -9,15 +9,20 @@ from app.agent import build_agent
 
 from langchain_core.runnables.graph import MermaidDrawMethod
 from langchain_core.runnables.graph_mermaid import draw_mermaid_png
+from langgraph.checkpoint.memory import MemorySaver
 
 load_dotenv()
 
 app = FastAPI(title="Meeting Agent")
 
 calendar = MockCalendar()
-agent_graph = build_agent(calendar)
+
+memory = MemorySaver()
+config = {"configurable": {"thread_id": "1"}}
+
+agent_graph = build_agent(calendar, memory, config)
 
 graph_object = agent_graph.get_graph()
 mermaid_syntax = graph_object.draw_mermaid()
 
-draw_mermaid_png(mermaid_syntax=mermaid_syntax, output_file_path="workflow_graph.png")
+draw_mermaid_png(mermaid_syntax=mermaid_syntax, output_file_path="workflow_graph_human.png")

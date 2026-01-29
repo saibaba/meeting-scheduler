@@ -13,6 +13,13 @@ It has just 2 use-cases:
 
 Modify .venv and add your OPENAI_API_KEY.
 
+There are two modes of operation controlled by `mode` variable in app/main.py.
+
+ITERATE => naive implementation where graph snapshot is not saved by interrupting when human input is needed. The graph is rerun at the starting node with the additional input included in context/state.
+HUMAN_IN_LOOP => Human in loop feature of langchain is used where graph is interrupted and state is saved in MemorySaver and resumed with the human node with new turns.
+
+You can change and play with it.
+
 
 ## Testing
 
@@ -24,6 +31,11 @@ $ fastapi dev
 
 Above service could be invoked from curl client.
 
+You can also invoke directly with uvicorn:
+
+```
+$ uvicorn app.main:app --reload --port 8000
+```
 
 ### With calendar slot available
 
@@ -113,6 +125,12 @@ Response with booking confirmed:
 ```
 
 ## Langchain workflow
+
+With Human in loop workflow where graph is resumed in subsequent turns:
+
+![alt text](workflow_graph_human.png "Workflow with Human in loop")
+
+With naive implementation where graph is rerun from the beginning in each turn:
 
 ![alt text](workflow_graph.png "Workflow")
 
