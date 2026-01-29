@@ -26,7 +26,11 @@ def healthz():
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
     state = SESSIONS.get(req.session_id, AgentState())
-    state.last_user_message = req.message
+
+    if (isinstance(state, AgentState)):
+        state.messages = [req.message]
+    else:
+        state['messages'] = [req.message]
 
     new_state = await agent_graph.ainvoke(state)
     SESSIONS[req.session_id] = new_state
@@ -35,6 +39,6 @@ async def chat(req: ChatRequest):
 
     return ChatResponse(
         session_id=req.session_id,
-        reply=new_state['last_agent_message'],
+        reply=new_state['messages'][-1],
         state=new_state,
     )

@@ -14,7 +14,9 @@ class ChatResponse(BaseModel):
     state: Dict[str, Any]
 
 
+
 class MeetingDraft(BaseModel):
+    host_full_name: Optional[str] = None
     attendee_full_name: Optional[str] = None
     subject: Optional[str] = None
     start_time_iso: Optional[str] = None  # ISO string in local tz or with offset
@@ -26,12 +28,7 @@ class SlotSuggestion(BaseModel):
     start_time_iso: str
     duration_minutes: int
 
-
 class AgentState(BaseModel):
-    # Conversation
-    last_user_message: str = ""
-    last_agent_message: str = ""
-
     # Draft meeting details
     draft: MeetingDraft = Field(default_factory=MeetingDraft)
 
@@ -39,13 +36,14 @@ class AgentState(BaseModel):
     status: Literal[
         "collecting_info",
         "checking_availability",
-        "proposing_alternatives",
-        "confirming",
         "booked",
+        "ask_human",
     ] = "collecting_info"
 
     # Suggestions / results
     suggestions: List[SlotSuggestion] = Field(default_factory=list)
     booked_event: Optional[dict] = None
     override : bool = False;
+    #messages: Annotated[list, add_messages] = []
+    messages: List[str] = []
 

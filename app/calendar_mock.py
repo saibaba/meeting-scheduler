@@ -47,12 +47,14 @@ class MockCalendar:
                     return suggestions
         return suggestions
 
-    def book(self, attendee: str, subject: str, start: dt.datetime, duration_minutes: int) -> dict:
+    def book(self, host: str, attendee: str, subject: str, start: dt.datetime, duration_minutes: int) -> dict:
         event = {
             "id": f"1",
+            "host_full_name": host,
             "attendee_full_name": attendee,
             "subject": subject,
             "start_time_iso": start.isoformat(),
             "duration_minutes": duration_minutes,
         }
         return event
+

@@ -32,17 +32,33 @@ Sample request:
 ```
 $ curl -s http://localhost:8000/chat \
   -H 'content-type: application/json' \
-  -d '{"session_id":"demo1","message":"Set up a 30 minute meeting with Alex Chen about Q1 planning 01/27/2026 6 pm"}' 
+  -d '{"session_id":"demo1","message":"Set up a 30 minute meeting with Alex Chen about Q1 planning 01/27/2026 6 pm"}'
 ```
 
 
 Note: Use a new session_id every time as the requests are stored in a map in code. It is needed for multi-turn example (shown in the section below).
 
 
-Sample response:
+Response asking for missing info:
 
 ```
-{"session_id":"demo1","reply":"Booked: Q1 planning with Alex Chen at 2026-01-27T18:00:00-08:00 for 30 minutes.","state":{"last_user_message":"Set up a 30 minute meeting with Alex Chen about Q1 planning 01/27/2026 6 pm","last_agent_message":"Booked: Q1 planning with Alex Chen at 2026-01-27T18:00:00-08:00 for 30 minutes.","draft":{"attendee_full_name":"Alex Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30,"timezone":"America/Los_Angeles"},"status":"booked","suggestions":[],"booked_event":{"id":"1","attendee_full_name":"Alex Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30},"override":false}}
+{"session_id":"demo1","reply":"Who will be hosting the meeting?","state":{"draft":{"host_full_name":null,"attendee_full_name":"Alex Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30,"timezone":"America/Los_Angeles"},"status":"ask_human","suggestions":[],"override":false,"messages":["Who will be hosting the meeting?"]}}
+```
+
+
+Then send host details:
+
+```
+$ curl -s http://localhost:8000/chat \
+  -H 'content-type: application/json' \
+  -d '{"session_id":"demo1","message":"meeting hosted by saibaba"}'                                                  
+```
+
+
+Final response:
+
+```
+{"session_id":"demo1","reply":"The Q1 planning meeting with Alex Chen has been successfully scheduled for January 27, 2026, at 6:00 PM PST. The meeting is set to last for 30 minutes and was organized by the host, Saibaba.","state":{"draft":{"host_full_name":"saibaba","attendee_full_name":"Alex Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30,"timezone":"America/Los_Angeles"},"status":"booked","suggestions":[],"booked_event":{"id":"1","host_full_name":"saibaba","attendee_full_name":"Alex Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30},"override":false,"messages":["The Q1 planning meeting with Alex Chen has been successfully scheduled for January 27, 2026, at 6:00 PM PST. The meeting is set to last for 30 minutes and was organized by the host, Saibaba."]}}
 ```
 
 
@@ -54,31 +70,46 @@ If the meeting is with any person whose name contains jeff or mike, the first ti
 Sample request:
 
 ```
+$ curl -s http://localhost:8000/chat \
+  -H 'content-type: application/json' \
+  -d '{"session_id":"demo2","message":"Set up a 30 minute meeting with jeff  Chen about Q1 planning 01/27/2026 6 pm"}'
+```
+
+Response asking for missing info:
+
+```
+{"session_id":"demo2","reply":"Who will be hosting the meeting?","state":{"draft":{"host_full_name":null,"attendee_full_name":"Jeff Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30,"timezone":"America/Los_Angeles"},"status":"ask_human","suggestions":[],"override":false,"messages":["Who will be hosting the meeting?"]}}
+```
+
+Send host info:
+
+```
 curl -s http://localhost:8000/chat \
   -H 'content-type: application/json' \
-  -d '{"session_id":"demo2","message":"Set up a 30 minute meeting with Jeff Chen about Q1 planning 01/27/2026 6 pm"}' 
+  -d '{"session_id":"demo2","message":"meeting hosted by saibaba"}'                                                  
 ```
 
-Response:
 
+Response asking to pick a slot:
 ```
-{"session_id":"demo2","reply":"Jeff Chen is busy then. How about: Wed, Jan 28 at 9:00 AM; Wed, Jan 28 at 9:30 AM; Wed, Jan 28 at 10:00 AM ?","state":{"last_user_message":"Set up a 30 minute meeting with Jeff Chen about Q1 planning 01/27/2026 6 pm","last_agent_message":"Jeff Chen is busy then. How about: Wed, Jan 28 at 9:00 AM; Wed, Jan 28 at 9:30 AM; Wed, Jan 28 at 10:00 AM ?","draft":{"attendee_full_name":"Jeff Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30,"timezone":"America/Los_Angeles"},"status":"proposing_alternatives","suggestions":[{"start_time_iso":"2026-01-28T09:00:00-08:00","duration_minutes":30},{"start_time_iso":"2026-01-28T09:30:00-08:00","duration_minutes":30},{"start_time_iso":"2026-01-28T10:00:00-08:00","duration_minutes":30}],"override":true}}%     
+{"session_id":"demo2","reply":"Please choose a new time for the \"Q1 planning\" meeting with Jeff Chen from the options below:\n\n1. Wednesday, January 28 at 9:00 AM (PST)\n2. Wednesday, January 28 at 9:30 AM (PST)\n3. Wednesday, January 28 at 10:00 AM (PST)\n\nWhich option works best for you, or would you like to propose another time?","state":{"draft":{"host_full_name":"saibaba","attendee_full_name":"Jeff Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30,"timezone":"America/Los_Angeles"},"status":"ask_human","suggestions":[{"start_time_iso":"2026-01-28T09:00:00-08:00","duration_minutes":30},{"start_time_iso":"2026-01-28T09:30:00-08:00","duration_minutes":30},{"start_time_iso":"2026-01-28T10:00:00-08:00","duration_minutes":30}],"override":true,"messages":["Please choose a new time for the \"Q1 planning\" meeting with Jeff Chen from the options below:\n\n1. Wednesday, January 28 at 9:00 AM (PST)\n2. Wednesday, January 28 at 9:30 AM (PST)\n3. Wednesday, January 28 at 10:00 AM (PST)\n\nWhich option works best for you, or would you like to propose another time?"]}}
 ```
 
-Send a new message with one of the slots picked and it will be booked. 
+
+Send a new message with one of the slots picked:
 
 Request:
 
 ```
 $ curl -s http://localhost:8000/chat \
   -H 'content-type: application/json' \
-  -d '{"session_id":"demo2","message":"2026-01-27T18:00:00-08:00 is great! book it!"}'                               
+  -d '{"session_id":"demo2","message":"Wednesday, January 28 at 9:00 AM (PST) works the best!"}'
 ```
 
-Response:
+Response with booking confirmed:
 
 ```
-{"session_id":"demo2","reply":"Booked: Q1 planning with Jeff Chen at 2026-01-27T18:00:00-08:00 for 30 minutes.","state":{"last_user_message":"Set up a 30 minute meeting with Jeff Chen about Q1 planning 01/27/2026 6 pm","last_agent_message":"Booked: Q1 planning with Jeff Chen at 2026-01-27T18:00:00-08:00 for 30 minutes.","draft":{"attendee_full_name":"Jeff Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30,"timezone":"America/Los_Angeles"},"status":"booked","suggestions":[],"booked_event":{"id":"1","attendee_full_name":"Jeff Chen","subject":"Q1 planning","start_time_iso":"2026-01-27T18:00:00-08:00","duration_minutes":30},"override":true}}
+{"session_id":"demo2","reply":"The meeting titled \"Q1 Planning with Jeff Chen\" has been successfully scheduled. It will take place on January 28, 2027, at 9:00 AM PST and is set to last for 30 minutes. The meeting was organized by the host, Saibaba.","state":{"draft":{"host_full_name":"saibaba","attendee_full_name":"Jeff Chen","subject":"Q1 planning","start_time_iso":"2027-01-28T09:00:00-08:00","duration_minutes":30,"timezone":"PST"},"status":"booked","suggestions":[{"start_time_iso":"2026-01-28T09:00:00-08:00","duration_minutes":30},{"start_time_iso":"2026-01-28T09:30:00-08:00","duration_minutes":30},{"start_time_iso":"2026-01-28T10:00:00-08:00","duration_minutes":30}],"booked_event":{"id":"1","host_full_name":"saibaba","attendee_full_name":"Jeff Chen","subject":"Q1 planning","start_time_iso":"2027-01-28T09:00:00-08:00","duration_minutes":30},"override":true,"messages":["The meeting titled \"Q1 Planning with Jeff Chen\" has been successfully scheduled. It will take place on January 28, 2027, at 9:00 AM PST and is set to last for 30 minutes. The meeting was organized by the host, Saibaba."]}}
 ```
 
 ## Langchain workflow
@@ -108,6 +139,5 @@ $ python3 gen_graph.py
 
 ## TODO
 
-1. Add proper memory management
-2. Replace mock calander with real one
-3. Add additional steps / nodes to handle missing or incomplete info
+1. Replace mock calander with real one
+
