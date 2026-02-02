@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from .schemas import ChatRequest, ChatResponse, AgentState
 from .calendar_mock import MockCalendar
 from .agent import build_agent
+from .multi_agent import build_multi_agent
 
 from langgraph.checkpoint.memory import MemorySaver
 
@@ -29,7 +30,7 @@ WORKFLOWS: dict[str, WorkflowState] = {}
 
 ITERATE = 1
 HUMAN_IN_LOOP = 2
-
+MULTI_AGENT = 3
 
 @app.get("/healthz")
 def healthz():
@@ -98,7 +99,39 @@ async def chat_iterate(req: ChatRequest):
     )
 
 
-mode = ITERATE
+async def chat_multiagent(req: ChatRequest):
+
+    new_state = None
+
+    if req.session_id not in WORKFLOWS:
+        print("MA: Creating new session")
+        config = {"configurable": {"thread_id": req.session_id}}
+        memory = MemorySaver()
+        calendar = MockCalendar()
+        graph = build_multi_agent(calendar, memory, config)
+        state = AgentState()
+        workflow_state = WorkflowState(state, graph, memory, config)
+        WORKFLOWS[req.session_id] = workflow_state
+        state.messages = [req.message]
+        new_state = await graph.ainvoke(state, config) 
+    else:
+        print("MA: Resumeing existing session")
+        workflow_state = WORKFLOWS[req.session_id]
+        graph = workflow_state.graph
+        config = workflow_state.config
+        graph.update_state(config, {"messages": [req.message]})
+        new_state = await graph.ainvoke(None, config) 
+
+    print("New state (", type(new_state), "): ", new_state)
+
+    return ChatResponse(
+        session_id=req.session_id,
+        reply=new_state['messages'][-1],
+        state=new_state,
+    )
+
+
+mode = MULTI_AGENT
 
 @app.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
@@ -106,6 +139,9 @@ async def chat(req: ChatRequest):
     if mode == HUMAN_IN_LOOP:
         response = await chat_human_in_loop_mode(req)
         return response
-    else:
+    elif mode == ITERATE:
         response = await chat_iterate(req)
+        return response
+    else:
+        response = await chat_multiagent(req)
         return response

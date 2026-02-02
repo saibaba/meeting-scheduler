@@ -46,4 +46,12 @@ class AgentState(BaseModel):
     override : bool = False;
     #messages: Annotated[list, add_messages] = []
     messages: List[str] = []
+    agent_name : Optional[str]  = None
+    planner_status: Literal[
+        "unknown",
+        "invoke_agent",
+        "planner",
+        "done",
+        ] = "unknown"
+    turns: int = 5
 

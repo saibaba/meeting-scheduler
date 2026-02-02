@@ -16,6 +16,7 @@ Modify .venv and add your OPENAI_API_KEY.
 There are two modes of operation controlled by `mode` variable in app/main.py:
 * ITERATE => naive implementation where graph snapshot is not saved by interrupting when human input is needed. The graph is rerun at the starting node with the additional input included in context/state.
 * HUMAN_IN_LOOP => Human in loop feature of langchain is used where graph is interrupted and state is saved in MemorySaver and resumed with the human node with new turns.
+* MULTI_AGENT => A generic planning agent orchestrates between input data gathering agent and booking agent.
 
 You can change and play with it.
 
