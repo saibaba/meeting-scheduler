@@ -1,7 +1,10 @@
 from __future__ import annotations
 from pydantic import BaseModel, Field
 from typing import Optional, List, Literal, Dict, Any
+import langgraph.runtime
+from dataclasses import dataclass
 
+from langgraph.graph.state import CompiledStateGraph
 
 class ChatRequest(BaseModel):
     session_id: str = Field(..., description="Client-provided stable session id")
@@ -55,3 +58,11 @@ class AgentState(BaseModel):
         ] = "unknown"
     turns: int = 5
 
+@dataclass
+class RuntimeContext:
+    llm: ChatOpenAI
+    json_parser: JsonOutputParser
+    default_tz:str  = "America/Los_Angeles" 
+    calendar : MockCalendar = None
+    booking_workflow : CompiledStateGraph = None
+    input_workflow  : CompiledStateGraph= None

@@ -10,22 +10,23 @@ class BusyBlock:
     start: dt.datetime
     end: dt.datetime
 
-busy = ["jeff", "mike"]
-
 class MockCalendar:
     """
     Deterministic free/busy based on attendee name + date.
     Also stores booked events in-memory per process (fine for demo).
     """
 
+    def __init__(self, busy_attendees):
+        self.busy_attendees = busy_attendees
+
     def is_available(self, attendee: str) -> bool:
-        for b in busy:
+        for b in self.busy_attendees:
             if b.lower() in attendee.lower():
                 return False
 
         return True
             
-        
+
     def suggest_alternatives(
         self,
         attendee: str,

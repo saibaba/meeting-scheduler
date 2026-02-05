@@ -6,6 +6,7 @@ async def invoke_llm(llm, messages):
         print(m)
 
     resp = await llm.ainvoke(messages)
+    print("LLM response =>")
     print(resp.content)
     return resp
 

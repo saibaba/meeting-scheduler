@@ -158,4 +158,3 @@ $ python3 gen_graph.py
 ## TODO
 
 1. Replace mock calander with real one
-
