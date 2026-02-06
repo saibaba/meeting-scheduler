@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 from .schemas import ChatRequest, ChatResponse, AgentState, RuntimeContext, MeetingDraft
 from .calendar_mock import MockCalendar
-from .agent import build_agent
+from .naive_agent import create_human_in_loop_graph, create_revivable_graph
 from .multi_agent import build_multi_agent
 from langchain_core.output_parsers import JsonOutputParser
 
@@ -53,21 +53,28 @@ async def chat_human_in_loop_mode(req: ChatRequest):
     if req.session_id not in WORKFLOWS:
         print("HIL: Creating new session")
         config = {"configurable": {"thread_id": req.session_id}}
-        memory = MemorySaver()
-        calendar = MockCalendar()
-        graph = build_agent(calendar, memory, config)
+        graph = create_human_in_loop_graph()
+        context = RuntimeContext(
+            json_parser = JsonOutputParser(pydantic_object=MeetingDraft),
+            llm = llm,
+            default_tz = os.getenv("DEFAULT_TIMEZONE", "America/Los_Angeles"),
+            calendar = MockCalendar(["jeff", "mike"]),
+            input_workflow = None,
+            booking_workflow = None
+        )
         state = AgentState()
-        workflow_state = WorkflowState(state, graph, memory, config)
+        workflow_state = WorkflowState(state, graph, None, config, context)
         WORKFLOWS[req.session_id] = workflow_state
         state.messages = [req.message]
-        new_state = await graph.ainvoke(state, config)
+        new_state = await graph.ainvoke(state, config=config, context=context)
     else:
         print("HIL: Resumeing existing session")
         workflow_state = WORKFLOWS[req.session_id]
         graph = workflow_state.graph
         config = workflow_state.config
+        context = workflow_state.context
         graph.update_state(config, {"messages": [req.message]})
-        new_state = await graph.ainvoke(None, config) 
+        new_state = await graph.ainvoke(None, config=config, context=context) 
 
     print("New state (", type(new_state), "): ", new_state)
 
@@ -83,20 +90,30 @@ async def chat_iterate(req: ChatRequest):
 
     if req.session_id not in WORKFLOWS:
         print("Iterate: Creating new session")
-        calendar = MockCalendar()
-        graph = build_agent(calendar)
+        config = {"configurable": {"thread_id": req.session_id}}
+        graph = create_revivable_graph()
+        context = RuntimeContext(
+            json_parser = JsonOutputParser(pydantic_object=MeetingDraft),
+            llm = llm,
+            default_tz = os.getenv("DEFAULT_TIMEZONE", "America/Los_Angeles"),
+            calendar = MockCalendar(["jeff", "mike"]),
+            input_workflow = None,
+            booking_workflow = None
+        )
         state = AgentState()
-        workflow_state = WorkflowState(state, graph, None, None)
+        workflow_state = WorkflowState(state, graph, None, config, context)
         WORKFLOWS[req.session_id] = workflow_state
         state.messages = [req.message]
-        new_state = await graph.ainvoke(state)
+        new_state = await graph.ainvoke(state, config=config, context=context)
     else:
         print("Iterate: Resumeing existing session")
         workflow_state = WORKFLOWS[req.session_id]
         graph = workflow_state.graph
         state_dict = workflow_state.state_dict
         state_dict['messages'] = [req.message]
-        new_state = await graph.ainvoke(state_dict)
+        context = workflow_state.context
+        config = workflow_state.config
+        new_state = await graph.ainvoke(state_dict, config=config, context=context)
 
     print("New state (", type(new_state), "): ", new_state)
 
@@ -107,7 +124,6 @@ async def chat_iterate(req: ChatRequest):
         reply=new_state['messages'][-1],
         state=new_state,
     )
-
 
 
 async def chat_multiagent(req: ChatRequest):
