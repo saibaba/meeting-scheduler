@@ -132,7 +132,14 @@ With Human in loop workflow where graph is resumed in subsequent turns:
 
 With naive implementation where graph is rerun from the beginning in each turn:
 
-![alt text](workflow_graph.png "Workflow")
+![alt text](workflow_graph_iterative.png "Workflow restarted in each iteration")
+
+
+With multiagent solution, there is a input agent, booking agent, and a planner/orchestration agent:
+
+![alt text](multiagent_workflow_graph_input.png "Workflow for input gathering agent")
+![alt text](multiagent_workflow_graph_booking.png "Workflow for booking agent")
+![alt text](multiagent_workflow_graph_planner.png "Workflow for planner agent")
 
 
 ## Building
